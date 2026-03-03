@@ -17,13 +17,23 @@ const routes: RouteRecordRaw[] = [
     path: '/dashboard',
     name: 'dashboard',
     component: () => import('@/views/DashboardView.vue'),
-    meta: { requiresAuth: true, roles: ['admin', 'organizer', 'participant'] as UserRole[] }
-  }
+    meta: { requiresAuth: true, roles: ['admin', 'organizer', 'participant'] as UserRole[] },
+  },
+  {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: () => import('../views/AdminUsersView.vue'),
+    beforeEnter: (to, from, next) => {
+      const authStore = useAuthStore()
+      if (authStore.isAdmin) next()
+      else next('/dashboard') // Redirige les curieux vers le dashboard
+    },
+  },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 })
 
 router.beforeEach((to, from, next) => {
