@@ -235,4 +235,55 @@ onMounted(() => {
   border-radius: 5px;
   cursor: pointer;
 }
+
+.owner-controls {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed #ddd;
+}
+
+.edit-btn {
+  flex: 1;
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  flex: 1;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edit-btn:hover {
+  background-color: #e67e22;
+}
+.delete-btn:hover {
+  background-color: #c0392b;
+}
+
+.attendees-list {
+  background: #f9f9f9;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+.attendees-list ul {
+  list-style: none;
+  padding: 0;
+}
+.attendees-list li {
+  font-size: 0.8em;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+}
 </style>
