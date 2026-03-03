@@ -14,6 +14,19 @@ const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue') },
   { path: '/register', name: 'register', component: () => import('@/views/RegisterView.vue') },
   {
+    path: '/events/create',
+    name: 'create-event',
+    component: () => import('../views/CreateEventView.vue'),
+    beforeEnter: (to, from, next) => {
+      const authStore = useAuthStore()
+      if (authStore.user?.role === 'organizer' || authStore.user?.role === 'admin') {
+        next()
+      } else {
+        next('/dashboard')
+      }
+    },
+  },
+  {
     path: '/dashboard',
     name: 'dashboard',
     component: () => import('@/views/DashboardView.vue'),
@@ -26,7 +39,7 @@ const routes: RouteRecordRaw[] = [
     beforeEnter: (to, from, next) => {
       const authStore = useAuthStore()
       if (authStore.isAdmin) next()
-      else next('/dashboard') // Redirige les curieux vers le dashboard
+      else next('/dashboard')
     },
   },
 ]
