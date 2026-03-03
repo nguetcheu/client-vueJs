@@ -2,28 +2,26 @@
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import type { UserRole } from '@/types/user'
+import api from '@/api/axios' 
 
 const authStore = useAuthStore()
 const router = useRouter()
-
 const email = ref('')
 const password = ref('')
 
-const handleLogin = () => {
-  const mockRole: UserRole = email.value.includes('admin') ? 'admin' : 'participant'
-
-  authStore.setUser(
-    {
-      _id: '1',
-      name: 'Utilisateur Test',
+const handleLogin = async () => {
+  try {
+    const response = await api.post('/auth/login', {
       email: email.value,
-      role: mockRole, 
-    },
-    'fake-jwt-token',
-  )
-
-  router.push('/dashboard')
+      password: password.value
+    })
+    
+    authStore.setUser(response.data, response.data.token)
+    router.push('/dashboard')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    alert('Identifiants incorrects')
+  }
 }
 </script>
 
