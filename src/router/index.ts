@@ -27,6 +27,12 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/events/edit/:id',
+    name: 'edit-event',
+    component: () => import('../views/EditEventView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/dashboard',
     name: 'dashboard',
     component: () => import('@/views/DashboardView.vue'),
