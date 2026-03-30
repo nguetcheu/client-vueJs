@@ -62,63 +62,71 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="dashboard">
-    <div class="header">
-      <h1>Tableau de bord ({{ authStore.user?.role }})</h1>
-      <button @click="handleLogout" class="logout-btn">Se déconnecter</button>
-    </div>
+  <div class="dashboard-container">
+    <header class="dashboard-header">
+      <div class="welcome-text">
+        <h1>Tableau de bord</h1>
+        <p>
+          Bienvenue, <strong>{{ authStore.user?.name }}</strong>
+          <span class="role-tag">{{ authStore.user?.role }}</span>
+        </p>
+      </div>
+      <button @click="handleLogout" class="btn-logout">Se déconnecter</button>
+    </header>
 
-    <div v-if="authStore.user?.role === 'admin'" class="admin-panel">
-      <h2>Actions Administrateur</h2>
-      <button @click="router.push('/admin/users')">Gérer les Utilisateurs</button>
-    </div>
+    <section class="action-grid">
+      <div v-if="authStore.user?.role === 'admin'" class="card admin-card">
+        <h3>Administration</h3>
+        <p>Gérez l'ensemble des utilisateurs de la plateforme.</p>
+        <button @click="router.push('/admin/users')" class="btn-primary">
+          Gérer les Utilisateurs
+        </button>
+      </div>
 
-    <div
-      v-if="authStore.user?.role === 'organizer' || authStore.user?.role === 'admin'"
-      class="organizer-panel"
-    >
-      <h2>Actions Organisateur</h2>
-      <p>Vous pouvez créer et gérer vos propres événements ici.</p>
-      <button @click="router.push('/events/create')" class="create-btn">
-        ➕ Créer un événement
-      </button>
-    </div>
+      <div
+        v-if="authStore.user?.role === 'organizer' || authStore.user?.role === 'admin'"
+        class="card organizer-card"
+      >
+        <h3>Organisateur</h3>
+        <p>Créez de nouveaux événements pour la communauté.</p>
+        <button @click="router.push('/events/create')" class="btn-success">
+          ➕ Créer un événement
+        </button>
+      </div>
+    </section>
 
-    <div class="events-section">
-      <h2>Événements à la une</h2>
+    <section class="events-section">
+      <div class="section-header">
+        <h2>Événements disponibles</h2>
+        <span class="count-badge">{{ events.length }} événements</span>
+      </div>
 
-      <div v-if="loading">Chargement des événements...</div>
+      <div v-if="loading" class="loader">Chargement des événements...</div>
 
-      <div v-else-if="events.length === 0" class="no-events">
-        Aucun événement disponible pour le moment.
+      <div v-else-if="events.length === 0" class="empty-state">
+        <p>Aucun événement disponible pour le moment.</p>
       </div>
 
       <div v-else class="event-grid">
         <div v-for="event in events" :key="event._id" class="event-card">
-          <div class="event-header">
-            <span class="category-badge">{{ event.category }}</span>
+          <div class="event-content">
+            <span class="category">{{ event.category }}</span>
             <h3>{{ event.title }}</h3>
-          </div>
+            <p class="description">{{ event.description }}</p>
 
-          <p class="description">{{ event.description }}</p>
-
-          <div class="event-info">
-            <p>📍 <strong>Lieu :</strong> {{ event.location }}</p>
-            <p>📅 <strong>Date :</strong> {{ new Date(event.date).toLocaleDateString() }}</p>
-            <p>👥 <strong>Places :</strong> {{ event.attendees.length }} / {{ event.capacity }}</p>
-          </div>
-
-          <div
-            v-if="
-              authStore.user?.role === 'admin' ||
-              (authStore.user?.role === 'organizer' && event.organizer?._id === authStore.user?._id)
-            "
-            class="owner-controls"
-          >
-            <button @click="router.push(`/events/edit/${event._id}`)" class="edit-btn">
-              ✏️ Modifier
-            </button>
-            <button @click="deleteEvent(event._id)" class="delete-btn">🗑️ Supprimer</button>
+            <div class="info-list">
+              <span>📍 {{ event.location }}</span>
+              <span
+                >📅
+                {{
+                  new Date(event.date).toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                  })
+                }}</span
+              >
+              <span>👥 {{ event.attendees.length }} / {{ event.capacity }} inscrits</span>
+            </div>
           </div>
 
           <div
@@ -126,164 +134,171 @@ onMounted(() => {
               authStore.user?.role === 'admin' ||
               (authStore.user?.role === 'organizer' && event.organizer?._id === authStore.user?._id)
             "
-            class="attendees-list"
+            class="management-zone"
           >
-            <h4>👥 Liste des inscrits ({{ event.attendees.length }})</h4>
-            <ul v-if="event.attendees.length > 0">
-              <li v-for="guest in event.attendees" :key="guest._id">
-                {{ guest.name }} ({{ guest.email }})
-              </li>
-            </ul>
-            <p v-else class="no-data">Personne n'est encore inscrit.</p>
+            <button @click="goToEdit(event._id)" class="btn-edit">Modifier</button>
+            <button @click="deleteEvent(event._id)" class="btn-delete">Supprimer</button>
           </div>
 
           <button
             v-if="authStore.user?.role === 'participant'"
-            class="register-btn"
             @click="handleRegister(event._id)"
+            class="btn-register"
+            :disabled="event.attendees.length >= event.capacity"
           >
-            S'inscrire
+            {{ event.attendees.length >= event.capacity ? 'Complet' : "S'inscrire" }}
           </button>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.header {
+.dashboard-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Header Style */
+.dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 2px solid #eee;
-  padding-bottom: 10px;
+  margin-bottom: 2.5rem;
 }
-.logout-btn {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 5px;
-  cursor: pointer;
+.role-tag {
+  background: #e0e7ff;
+  color: #4338ca;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  margin-left: 10px;
 }
-.admin-panel {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  margin: 20px 0;
-  border: 1px solid #000;
+
+/* Cards & Grid */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
-.organizer-panel {
-  background: #e8f5e9;
-  padding: 20px;
-  border-radius: 8px;
-  margin: 20px 0;
-  border: 1px solid #2e7d32;
+.card {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
-.create-btn {
-  background-color: #2e7d32;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
+.admin-card {
+  border-left: 4px solid #6366f1;
 }
-.events-section {
-  margin-top: 30px;
+.organizer-card {
+  border-left: 4px solid #10b981;
 }
+
+/* Event Cards */
 .event-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
 }
 .event-card {
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  overflow: hidden;
 }
 .event-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
-.category-badge {
-  background: #eee;
-  font-size: 0.7em;
-  padding: 3px 8px;
-  border-radius: 10px;
+.event-content {
+  padding: 1.5rem;
+  flex-grow: 1;
+}
+.category {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6366f1;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
-.description {
-  color: #666;
-  font-size: 0.9em;
-  margin: 10px 0;
-}
-.event-info p {
-  margin: 5px 0;
-  font-size: 0.85em;
-}
-.register-btn {
-  width: 100%;
-  margin-top: 15px;
-  padding: 10px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.owner-controls {
+.info-list {
+  margin-top: 1rem;
   display: flex;
-  gap: 10px;
-  margin: 15px 0;
-  padding-bottom: 15px;
-  border-bottom: 1px dashed #ddd;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #64748b;
 }
 
-.edit-btn {
-  flex: 1;
-  background-color: #f39c12;
+/* Buttons */
+.btn-primary {
+  background: #6366f1;
   color: white;
   border: none;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: 8px;
   cursor: pointer;
 }
-
-.delete-btn {
-  flex: 1;
-  background-color: #e74c3c;
+.btn-success {
+  background: #10b981;
   color: white;
   border: none;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: 8px;
   cursor: pointer;
 }
-
-.edit-btn:hover {
-  background-color: #e67e22;
+.btn-logout {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #ef4444;
 }
-.delete-btn:hover {
-  background-color: #c0392b;
+.btn-register {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: #6366f1;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-register:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
 }
 
-.attendees-list {
-  background: #f9f9f9;
+.management-zone {
+  display: flex;
+  gap: 1px;
+  background: #f1f5f9;
+  border-top: 1px solid #f1f5f9;
+}
+.btn-edit,
+.btn-delete {
+  flex: 1;
   padding: 10px;
-  border-radius: 6px;
-  margin-top: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  background: white;
 }
-.attendees-list ul {
-  list-style: none;
-  padding: 0;
+.btn-edit {
+  color: #f59e0b;
+  border-right: 1px solid #f1f5f9;
 }
-.attendees-list li {
-  font-size: 0.8em;
-  padding: 4px 0;
-  border-bottom: 1px solid #eee;
+.btn-delete {
+  color: #ef4444;
 }
 </style>
