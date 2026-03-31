@@ -1,4 +1,5 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
+<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
@@ -7,7 +8,6 @@ import api from '@/api/axios'
 
 const authStore = useAuthStore()
 const router = useRouter()
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const events = ref<any[]>([])
 const loading = ref(true)
 
@@ -27,15 +27,34 @@ const handleLogout = () => {
   router.push('/login')
 }
 
+const isUserRegistered = (event: any) => {
+  if (!authStore.user) return false
+  return event.attendees.some((attendee: any) => {
+    const attendeeId = typeof attendee === 'object' ? attendee._id : attendee
+    return attendeeId === authStore.user?._id
+  })
+}
+
 const handleRegister = async (eventId: string) => {
   try {
     const response = await api.post(`/events/${eventId}/register`)
     alert(response.data.message || 'Inscription réussie !')
     await fetchEvents()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const errorMsg = error.response?.data?.message || "Erreur lors de l'inscription"
     alert(errorMsg)
+  }
+}
+
+const handleUnregister = async (eventId: string) => {
+  if (confirm('Voulez-vous vraiment annuler votre participation ?')) {
+    try {
+      const response = await api.post(`/events/${eventId}/unregister`)
+      alert(response.data.message || 'Désinscription réussie')
+      await fetchEvents()
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Erreur lors de la désinscription')
+    }
   }
 }
 
@@ -45,7 +64,6 @@ const deleteEvent = async (id: string) => {
       await api.delete(`/events/${id}`)
       events.value = events.value.filter((e) => e._id !== id)
       alert('Événement supprimé')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       alert('Erreur lors de la suppression')
     }
@@ -140,14 +158,24 @@ onMounted(() => {
             <button @click="deleteEvent(event._id)" class="btn-delete">Supprimer</button>
           </div>
 
-          <button
-            v-if="authStore.user?.role === 'participant'"
-            @click="handleRegister(event._id)"
-            class="btn-register"
-            :disabled="event.attendees.length >= event.capacity"
-          >
-            {{ event.attendees.length >= event.capacity ? 'Complet' : "S'inscrire" }}
-          </button>
+          <div v-if="authStore.user?.role === 'participant'" class="registration-actions">
+            <button
+              v-if="isUserRegistered(event)"
+              @click="handleUnregister(event._id)"
+              class="btn-unregister"
+            >
+              Annuler ma participation
+            </button>
+
+            <button
+              v-else
+              @click="handleRegister(event._id)"
+              class="btn-register"
+              :disabled="event.attendees.length >= event.capacity"
+            >
+              {{ event.attendees.length >= event.capacity ? 'Complet' : "S'inscrire" }}
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -161,13 +189,13 @@ onMounted(() => {
   padding: 2rem 1rem;
 }
 
-/* Header Style */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2.5rem;
 }
+
 .role-tag {
   background: #e0e7ff;
   color: #4338ca;
@@ -178,13 +206,13 @@ onMounted(() => {
   margin-left: 10px;
 }
 
-/* Cards & Grid */
 .action-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
+
 .card {
   padding: 1.5rem;
   border-radius: 12px;
@@ -192,19 +220,21 @@ onMounted(() => {
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
+
 .admin-card {
   border-left: 4px solid #6366f1;
 }
+
 .organizer-card {
   border-left: 4px solid #10b981;
 }
 
-/* Event Cards */
 .event-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 2rem;
 }
+
 .event-card {
   background: white;
   border-radius: 16px;
@@ -216,14 +246,17 @@ onMounted(() => {
     box-shadow 0.2s;
   overflow: hidden;
 }
+
 .event-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
+
 .event-content {
   padding: 1.5rem;
   flex-grow: 1;
 }
+
 .category {
   font-size: 0.7rem;
   font-weight: 700;
@@ -231,6 +264,7 @@ onMounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
 .info-list {
   margin-top: 1rem;
   display: flex;
@@ -240,7 +274,6 @@ onMounted(() => {
   color: #64748b;
 }
 
-/* Buttons */
 .btn-primary {
   background: #6366f1;
   color: white;
@@ -249,6 +282,7 @@ onMounted(() => {
   border-radius: 8px;
   cursor: pointer;
 }
+
 .btn-success {
   background: #10b981;
   color: white;
@@ -257,6 +291,7 @@ onMounted(() => {
   border-radius: 8px;
   cursor: pointer;
 }
+
 .btn-logout {
   background: transparent;
   border: 1px solid #e2e8f0;
@@ -265,6 +300,7 @@ onMounted(() => {
   cursor: pointer;
   color: #ef4444;
 }
+
 .btn-register {
   width: 100%;
   padding: 12px;
@@ -274,9 +310,31 @@ onMounted(() => {
   font-weight: 600;
   cursor: pointer;
 }
+
 .btn-register:disabled {
   background: #cbd5e1;
   cursor: not-allowed;
+}
+
+.btn-unregister {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+  border-top: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.btn-unregister:hover {
+  background: #fff1f2;
+  color: #ef4444;
+}
+
+.registration-actions {
+  width: 100%;
 }
 
 .management-zone {
@@ -285,6 +343,7 @@ onMounted(() => {
   background: #f1f5f9;
   border-top: 1px solid #f1f5f9;
 }
+
 .btn-edit,
 .btn-delete {
   flex: 1;
@@ -294,10 +353,12 @@ onMounted(() => {
   font-size: 0.85rem;
   background: white;
 }
+
 .btn-edit {
   color: #f59e0b;
   border-right: 1px solid #f1f5f9;
 }
+
 .btn-delete {
   color: #ef4444;
 }
