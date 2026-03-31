@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterView, RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import CookieBanner from '@/components/CookieBanner.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -26,6 +27,7 @@ const handleLogout = () => {
 
         <template v-else>
           <RouterLink to="/dashboard" class="link">Dashboard</RouterLink>
+          <RouterLink to="/profile" class="link">Mon Profil</RouterLink>
           <button @click="handleLogout" class="btn-minimal">Déconnexion</button>
         </template>
       </div>
@@ -39,6 +41,8 @@ const handleLogout = () => {
       </transition>
     </RouterView>
   </main>
+
+  <CookieBanner />
 </template>
 
 <style>
@@ -60,7 +64,6 @@ body {
 }
 
 .nav-container {
-  max-width: 1100px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
@@ -134,5 +137,19 @@ body {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .nav-container {
+    padding: 0 1rem;
+  }
+
+  .nav-links {
+    gap: 1rem;
+  }
+
+  .brand {
+    font-size: 1.2rem;
+  }
 }
 </style>

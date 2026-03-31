@@ -4,7 +4,14 @@ import api from '@/api/axios'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const form = ref({ name: '', email: '', password: '', role: 'participant' })
+const form = ref({
+  name: '',
+  email: '',
+  password: '',
+  role: 'participant',
+  phone: '',
+  acceptRGPD: false,
+})
 const loading = ref(false)
 
 const handleRegister = async () => {
@@ -13,10 +20,10 @@ const handleRegister = async () => {
     await api.post('/auth/register', form.value)
     alert('Compte créé avec succès ! Connectez-vous.')
     router.push('/login')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error(error)
-    const message = error.response?.data?.message || "Erreur serveur"
+    const message = error.response?.data?.message || 'Erreur serveur'
     alert("Détail de l'erreur : " + message)
   } finally {
     loading.value = false
@@ -35,22 +42,12 @@ const handleRegister = async () => {
       <form @submit.prevent="handleRegister" class="auth-form">
         <div class="input-group">
           <label>Nom complet</label>
-          <input
-            v-model="form.name"
-            type="text"
-            placeholder="Ex: Jean Dupont"
-            required
-          />
+          <input v-model="form.name" type="text" placeholder="Ex: Jean Dupont" required />
         </div>
 
         <div class="input-group">
           <label>Adresse Email</label>
-          <input
-            v-model="form.email"
-            type="email"
-            placeholder="nom@exemple.com"
-            required
-          />
+          <input v-model="form.email" type="email" placeholder="nom@exemple.com" required />
         </div>
 
         <div class="input-group">
@@ -69,6 +66,21 @@ const handleRegister = async () => {
             <option value="participant">Participant (je m'inscris aux événements)</option>
             <option value="organizer">Organisateur (je crée des événements)</option>
           </select>
+        </div>
+
+        <div class="input-group">
+          <label>Téléphone (Optionnel)</label>
+          <input v-model="form.phone" type="tel" placeholder="06 00 00 00 00" maxlength="9" />
+        </div>
+
+        <div class="input-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="form.acceptRGPD" required />
+            <span
+              >J'ai lu et j'accepte la
+              <router-link to="/privacy">politique de confidentialité</router-link></span
+            >
+          </label>
         </div>
 
         <button type="submit" class="btn-submit" :disabled="loading">
@@ -97,7 +109,9 @@ const handleRegister = async () => {
   background: white;
   padding: 2.5rem;
   border-radius: 24px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.05),
+    0 10px 10px -5px rgba(0, 0, 0, 0.02);
   width: 100%;
   max-width: 450px;
 }
@@ -139,7 +153,8 @@ const handleRegister = async () => {
   margin-left: 4px;
 }
 
-input, .role-select {
+input,
+.role-select {
   padding: 12px 16px;
   border: 1.5px solid #e2e8f0;
   border-radius: 12px;
@@ -148,7 +163,8 @@ input, .role-select {
   background: #fcfcfd;
 }
 
-input:focus, .role-select:focus {
+input:focus,
+.role-select:focus {
   outline: none;
   border-color: #6366f1;
   background: white;
