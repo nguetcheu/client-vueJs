@@ -46,6 +46,24 @@ const handleRegister = async (eventId: string) => {
   }
 }
 
+const downloadCSV = async (eventId: string, eventTitle: string) => {
+  try {
+    const response = await api.get(`/events/${eventId}/export`, {
+      responseType: 'blob',
+    })
+
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `participants-${eventTitle}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (error) {
+    alert('Erreur lors du téléchargement du fichier CSV')
+  }
+}
+
 const handleUnregister = async (eventId: string) => {
   if (confirm('Voulez-vous vraiment annuler votre participation ?')) {
     try {
@@ -155,6 +173,7 @@ onMounted(() => {
             class="management-zone"
           >
             <button @click="goToEdit(event._id)" class="btn-edit">Modifier</button>
+            <button @click="downloadCSV(event._id, event.title)" class="btn-export">Exporter en CSV 📥</button>
             <button @click="deleteEvent(event._id)" class="btn-delete">Supprimer</button>
           </div>
 
@@ -227,6 +246,21 @@ onMounted(() => {
 
 .organizer-card {
   border-left: 4px solid #10b981;
+}
+
+.btn-export {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  background: white;
+  color: #10b981;
+  border-right: 1px solid #f1f5f9;
+}
+
+.btn-export:hover {
+  background: #f0fdf4;
 }
 
 .event-grid {
